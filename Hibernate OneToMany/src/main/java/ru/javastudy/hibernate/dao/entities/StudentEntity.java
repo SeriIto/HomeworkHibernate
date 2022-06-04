@@ -31,7 +31,7 @@ public class StudentEntity {
 
     private PersonEntity person;
 
-    @ManyToOne
+    @ManyToOne(cascade = CascadeType.REMOVE)
     @JoinColumn(name = "person_id")
     public PersonEntity getPerson() {return this.person;}
 
@@ -39,7 +39,7 @@ public class StudentEntity {
 
     private RecordBookEntity recordBook;
 
-    @OneToOne
+    @OneToOne(cascade = CascadeType.REMOVE)
     @JoinColumn(name = "record_book_id")
 
     public RecordBookEntity getRecordBook() {
@@ -47,6 +47,17 @@ public class StudentEntity {
     }
     public void setRecordBook(RecordBookEntity recordBook) {
         this.recordBook = recordBook;
+    }
+
+    public void print()
+    {
+        System.out.println(id + " " +
+                groupName + " " +
+                getPerson().getMiddleName() + " " +
+                getPerson().getFirstName() + " " +
+                getPerson().getMiddleName() + " " +
+                getPerson().getPassportNumber() + " " +
+                getPerson().getPassportSeria());
     }
 
 

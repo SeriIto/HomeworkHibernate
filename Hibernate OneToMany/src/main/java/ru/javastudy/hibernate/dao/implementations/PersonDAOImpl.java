@@ -19,26 +19,37 @@ public class PersonDAOImpl implements PersonDAO {
     }
 
     public List<PersonEntity> GetAll() {
-        return session.createQuery("from PersonEntity").list();
+        session.beginTransaction();
+        List list = session.createQuery("from PersonEntity").list();
+        session.getTransaction().commit();
+        return list;
     }
 
     public List<PersonEntity> GetWithLetter(char letter) {
-        return session.createQuery("from PersonEntity pe " +
+
+        session.beginTransaction();
+        List list = session.createQuery("from PersonEntity pe " +
                         "where pe.lastName like :letter " +
                         "or pe.firstName like :letter " +
                         "or pe.middleName like :letter")
                 .setParameter("letter", "%" + letter + "%")
                 .list();
+        session.getTransaction().commit();
+        return list;
     }
 
     public List<PersonEntity> GetWithLetterCriteria(char letter)
     {
+        session.beginTransaction();
         Criteria criteria = session.createCriteria(PersonEntity.class);
         SimpleExpression lastName = Restrictions.like("lastName", "%" + letter + "%");
         SimpleExpression firstName = Restrictions.like("firstName", "%" + letter + "%");
         SimpleExpression middleName = Restrictions.like("middleName", "%" + letter + "%");
 
-        return criteria.add(Restrictions.or(lastName, firstName, middleName)).list();
+        List list = criteria.add(Restrictions.or(lastName, firstName, middleName)).list();
+        session.getTransaction().commit();
+
+        return list;
     }
 
     public void save(PersonEntity person) {
@@ -46,9 +57,11 @@ public class PersonDAOImpl implements PersonDAO {
     }
 
     public void saveList(List<PersonEntity> personList) {
+        session.beginTransaction();
         for (PersonEntity person : personList) {
             session.save(person);
         }
+        session.getTransaction().commit();
     }
 
     public void setStudents(List<PersonEntity> persons, List<StudentEntity> students) {

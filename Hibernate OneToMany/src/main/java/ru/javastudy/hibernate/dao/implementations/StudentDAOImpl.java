@@ -18,7 +18,7 @@ public class StudentDAOImpl implements StudentDAO {
     }
 
     public List<StudentEntity> GetAll() {
-        return null;
+        return session.createQuery("from StudentEntity").list();
     }
 
     public void save(StudentEntity student) {
@@ -26,19 +26,32 @@ public class StudentDAOImpl implements StudentDAO {
     }
 
     public void saveList(List<StudentEntity> studentList) {
+        session.beginTransaction();
         for (StudentEntity student : studentList) {
             session.save(student);
         }
+        session.getTransaction().commit();
     }
 
     public List<StudentEntity> GetWithoutRecordBook() {
-        return session.createQuery("from StudentEntity se " +
+        session.beginTransaction();
+        List list = session.createQuery("from StudentEntity se " +
                 "where se.recordBook is null").list();
+        session.getTransaction().commit();
+        return list;
     }
 
     public List<StudentEntity> GetWithoutRecordBookCriteria() {
+
+        session.beginTransaction();
         Criteria criteria = session.createCriteria(StudentEntity.class);
-        return criteria.add(Restrictions.isNull("recordBook"))
+        List recordBook = criteria.add(Restrictions.isNull("recordBook"))
                 .list();
+        session.getTransaction().commit();
+        return recordBook;
+    }
+
+    public void deleteAll() {
+        session.createQuery("delete from StudentEntity");
     }
 }

@@ -24,9 +24,11 @@ public class RecordBookDAOImpl implements RecordBookDAO {
     }
 
     public void saveList(List<RecordBookEntity> recordBookList) {
+        session.beginTransaction();
         for (RecordBookEntity recordBook : recordBookList) {
             session.save(recordBook);
         }
+        session.getTransaction().commit();
     }
 
     public void setStudents(List<RecordBookEntity> recordBooks, List<StudentEntity> students) {

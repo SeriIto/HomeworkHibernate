@@ -2,24 +2,26 @@ package ru.javastudy.hibernate.main;
 
 import org.hibernate.Query;
 import org.hibernate.Session;
+import org.hibernate.engine.spi.SessionFactoryImplementor;
+import org.hibernate.event.service.spi.EventListenerRegistry;
+import org.hibernate.event.spi.EventType;
 import ru.javastudy.hibernate.dao.entities.PersonEntity;
 import ru.javastudy.hibernate.dao.entities.RecordBookEntity;
 import ru.javastudy.hibernate.dao.entities.StudentEntity;
 import ru.javastudy.hibernate.dao.implementations.PersonDAOImpl;
 import ru.javastudy.hibernate.dao.implementations.RecordBookDAOImpl;
 import ru.javastudy.hibernate.dao.implementations.StudentDAOImpl;
+import ru.javastudy.hibernate.dao.interfaces.StudentEntityDeleteEventListener;
 import ru.javastudy.hibernate.utils.EntitiesGenerator;
 import ru.javastudy.hibernate.utils.HibernateSessionFactory;
 import ru.javastudy.hibernate.utils.MyPrint;
 
 import javax.persistence.EntityManager;
-import javax.persistence.PersistenceUnit;
+import javax.persistence.EntityManagerFactory;
+import javax.persistence.Persistence;
 import java.util.List;
 
 public class AppMain {
-
-    @PersistenceUnit
-    static EntityManager emf;
 
     public static void main(String[] args) {
         EntitiesGenerator entitiesGenerator = new EntitiesGenerator();
@@ -38,6 +40,7 @@ public class AppMain {
         personDAO.setStudents(persons, students);
         recordBookDAO.setStudents(recordBooks, students);
 
+        //Сохранение данных
         personDAO.saveList(persons);
         studentDAO.saveList(students);
         recordBookDAO.saveList(recordBooks);
@@ -45,56 +48,41 @@ public class AppMain {
         MyPrint myPrint = new MyPrint();
         myPrint.PrintPersons(personDAO.GetAll());
 
+        //вывод только с "а"
         myPrint.PrintPersons(personDAO.GetWithLetter('а'));
         myPrint.PrintPersons(personDAO.GetWithLetterCriteria('а'));
 
+        //вывлд без зачетки
         myPrint.PrintStudents(studentDAO.GetWithoutRecordBook());
         myPrint.PrintStudents(studentDAO.GetWithoutRecordBookCriteria());
 
 
         session.getTransaction().commit();
-
         session.close();
 
+        session = HibernateSessionFactory.getSessionFactory().openSession();
+        session.beginTransaction();
 
-//        Session session = HibernateSessionFactory.getSessionFactory().openSession();
-//
-//        session.beginTransaction();
-//
-//        ContactEntity contactEntity = new ContactEntity();
-//
-//        contactEntity.setBirthDate(new java.util.Date());
-//        contactEntity.setFirstName("Ivan");
-//        contactEntity.setLastName("Petrov");
-//        session.save(contactEntity);
-//
-//        ContactTelDetailEntity contactTelDetail = new ContactTelDetailEntity();
-//
-//        contactTelDetail.setTelNumber("84884848");
-//        contactTelDetail.setTelType("home");
-//        contactEntity.addContactTelDetail(contactTelDetail);
-//        session.save(contactTelDetail);
-//
-//        session.getTransaction().commit();
-//
-////        Query query = session.createQuery("from ContactEntity where firstName = :paramName");
-////        query.setParameter("paramName", "Nick");
-////        List list = query.list();
-//
-//        ContactDAOImpl contactDAO = new ContactDAOImpl();
-//        contactDAO.setSession(session);
-//
-//        Transaction tx = session.beginTransaction();
-//
-//        List<ContactEntity> contacts = contactDAO.findAll();
-//        for (ContactEntity contact : contacts) {
-//            System.out.println(contact);
-//        }
-//
-//        listContactsWithDetail(contacts);
-//
-//        tx.commit();
-//        session.close();
+        //удаление
+        EntityManagerFactory entityManagerFactory = Persistence.createEntityManagerFactory("ru.javastudy.hibernate");
+        EntityManager entityManager = entityManagerFactory.createEntityManager();
 
+        entityManagerFactory.unwrap(SessionFactoryImplementor.class)
+                .getServiceRegistry()
+                .getService(EventListenerRegistry.class)
+                .prependListeners(EventType.PRE_DELETE, new StudentEntityDeleteEventListener());
+
+        studentDAO = new StudentDAOImpl(session);
+
+        List<StudentEntity> allStudents = studentDAO.GetAll();
+        entityManager.getTransaction().begin();
+        for (StudentEntity studentEntity : allStudents)
+        {
+            entityManager.remove(entityManager.getReference(StudentEntity.class, studentEntity.getId()));
+        }
+        entityManager.getTransaction().commit();
+
+        session.getTransaction().commit();
+        session.close();
     }
 }

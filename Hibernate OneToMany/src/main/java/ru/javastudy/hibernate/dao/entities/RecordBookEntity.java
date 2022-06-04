@@ -20,7 +20,7 @@ public class RecordBookEntity {
     }
 
     @Basic
-    @Column(name = "code", nullable = false, insertable = true, updatable = true)
+    @Column(name = "code", nullable = false, insertable = true, updatable = true, unique = true)
     public int getCode() {
         return code;
     }

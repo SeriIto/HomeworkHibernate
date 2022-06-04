@@ -14,4 +14,6 @@ public interface StudentDAO {
     List<StudentEntity> GetWithoutRecordBook();
 
     List<StudentEntity> GetWithoutRecordBookCriteria();
+
+    void deleteAll();
 }
